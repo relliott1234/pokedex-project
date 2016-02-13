@@ -8,9 +8,12 @@
 
 import UIKit
 
-class PokemonDetailVC: UIViewController {
+class PokemonDetailVC: UIViewController, UITableViewDelegate, UITableViewDataSource {
 
+    @IBOutlet weak var tableView: MovesTableView!
     @IBOutlet weak var nameLbl: UILabel!
+    @IBOutlet weak var bioStackView: UIStackView!
+    @IBOutlet weak var movesStackView: UIStackView!
     @IBOutlet weak var mainImg: UIImageView!
     @IBOutlet weak var descriptionLbl: UILabel!
     @IBOutlet weak var typeLbl: UILabel!
@@ -28,6 +31,8 @@ class PokemonDetailVC: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
+        tableView.delegate = self
+        tableView.dataSource = self
         nameLbl.text = pokemon.name
         let img = UIImage(named: "\(pokemon.pokedexId)")
         mainImg.image = img
@@ -37,6 +42,24 @@ class PokemonDetailVC: UIViewController {
         pokemon.downloadPokemonDetails { () -> () in
             //this will be called after download is done
             self.updateUI()
+        }
+    }
+    
+    func numberOfSectionsInTableView(tableView: UITableView) -> Int {
+        return 1
+    }
+    
+    func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return pokemon.moves.count
+    }
+    
+    func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
+        if let cell = tableView.dequeueReusableCellWithIdentifier("MovesCell") as? MovesTableViewCell {
+            let move = pokemon.moves[indexPath.row]
+            cell.configureCell(move)
+            return cell
+        } else {
+            return UITableViewCell()
         }
     }
     
@@ -60,8 +83,19 @@ class PokemonDetailVC: UIViewController {
             }
             evoLbl.text = str
         }
+        tableView.reloadData()
     }
 
+    @IBAction func segmentedControlChanged(sender: AnyObject) {
+        switch sender.selectedSegmentIndex {
+        case 0:
+            bioStackView.hidden = false
+            movesStackView.hidden = true
+        default:
+            bioStackView.hidden = true
+            movesStackView.hidden = false
+        }
+    }
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.

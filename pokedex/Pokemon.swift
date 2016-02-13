@@ -23,6 +23,7 @@ class Pokemon {
     private var _nextEvolutionId: String?
     private var _nextEvolutionLevel: String?
     private var _pokemonUrl: String!
+    private var _moves = [Dictionary<String, String>]()
     
     var description: String! {
         if let desc = _description {
@@ -88,11 +89,18 @@ class Pokemon {
     }
     
     var name: String! {
-        return _name
+        if let name = _name {
+            return name.capitalizedString
+        }
+        return ""
     }
     
     var pokedexId: Int! {
         return _pokedexId
+    }
+    
+    var moves: [Dictionary<String, String>] {
+        return _moves
     }
     
     init(name: String, pokedexId: Int) {
@@ -162,6 +170,28 @@ class Pokemon {
                     } else {
                         self._description = ""
                         completed()
+                    }
+                }
+                if let movesArr = dict["moves"] as? [Dictionary<String, AnyObject>] where movesArr.count > 0 {
+                    for var i = 0; i < movesArr.count; i++ {
+                        if let moveUri = movesArr[i]["resource_uri"] {
+                            let num = moveUri.stringByReplacingOccurrencesOfString("/api/v1/move/", withString:  "").stringByReplacingOccurrencesOfString("/", withString: "")
+                            Alamofire.request(.GET, NSURL(string: "\(URL_BASE)\(moveUri)")!).responseJSON { response in
+                                let result = response.result
+                                if let moveDict = result.value as? Dictionary<String, AnyObject> {
+                                     if let moveName = moveDict["name"] as? String, moveAccuracy = moveDict["accuracy"] as? Int, movePower = moveDict["power"] as? Int, moveDesc = moveDict["description"] as? String {
+                                        var newMoveDict = Dictionary<String, String>()
+                                        newMoveDict["id"] = num
+                                        newMoveDict["name"] = moveName
+                                        newMoveDict["accuracy"] = "\(moveAccuracy)"
+                                        newMoveDict["power"] = "\(movePower)"
+                                        newMoveDict["description"] = moveDesc
+                                        self._moves.append(newMoveDict)
+                                    }
+                                }
+                                completed()
+                            }
+                        }
                     }
                 }
                 
